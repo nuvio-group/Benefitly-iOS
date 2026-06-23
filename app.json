@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Benefitly",
+    "slug": "benefitly-ios",
+    "scheme": "benefitly",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/benefitly-logo.png",
+    "splash": {
+      "image": "./assets/benefitly-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6A00"
+    },
+    "userInterfaceStyle": "light",
+    "jsEngine": "jsc",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.benefitly.consumer",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "app.benefitly.consumer"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
