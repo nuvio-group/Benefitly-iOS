@@ -1,6 +1,7 @@
 import React from "react";
 import { ImageBackground, StyleSheet, Text, View } from "react-native";
 
+import { accentOn, borderOn, mutedOn, textOn } from "../theme/themeEngine";
 import { Promotion } from "../types/merchant";
 
 type PromotionCardProps = {
@@ -19,18 +20,21 @@ function PromotionCardComponent({
   surfaceColor,
   textColor,
   mutedTextColor,
-  dark = false,
   expanded = false,
 }: PromotionCardProps) {
+  const cardText = textOn(surfaceColor);
+  const cardMuted = mutedOn(surfaceColor);
+  const cardAccent = accentOn(surfaceColor, accentColor);
+  const badgeText = textOn(accentColor);
+
   return (
     <View
-      shouldRasterizeIOS
       style={[
         styles.card,
         expanded && styles.expandedCard,
         {
           backgroundColor: surfaceColor,
-          borderColor: dark ? "rgba(255,255,255,0.18)" : "rgba(18,18,18,0.06)",
+          borderColor: borderOn(surfaceColor),
         },
       ]}
     >
@@ -40,17 +44,17 @@ function PromotionCardComponent({
         imageStyle={styles.imageRadius}
       >
         <View style={[styles.badge, { backgroundColor: accentColor }]}>
-          <Text style={styles.badgeText}>{promotion.badge}</Text>
+          <Text style={[styles.badgeText, { color: badgeText }]}>{promotion.badge}</Text>
         </View>
       </ImageBackground>
       <View style={[styles.body, expanded && styles.expandedBody]}>
-        <Text style={[styles.title, { color: textColor }]} numberOfLines={2}>
+        <Text style={[styles.title, { color: cardText || textColor }]} numberOfLines={2}>
           {promotion.title}
         </Text>
-        <Text style={[styles.subtitle, { color: mutedTextColor }]} numberOfLines={3}>
+        <Text style={[styles.subtitle, { color: cardMuted || mutedTextColor }]} numberOfLines={3}>
           {promotion.subtitle}
         </Text>
-        <Text style={[styles.expiration, { color: accentColor }]}>{promotion.expirationDate}</Text>
+        <Text style={[styles.expiration, { color: cardAccent }]}>{promotion.expirationDate}</Text>
       </View>
     </View>
   );
@@ -62,10 +66,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginRight: 14,
     overflow: "hidden",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
     width: 170,
   },
   expandedCard: {
@@ -91,7 +91,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   badgeText: {
-    color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "900",
   },

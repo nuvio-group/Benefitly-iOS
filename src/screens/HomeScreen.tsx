@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
   Image,
-  ImageBackground,
+  InteractionManager,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import Animated, {
   Extrapolation,
-  FadeInUp,
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -28,7 +27,7 @@ import { MerchantReservationModal } from "../components/MerchantReservationModal
 import { ProgressBar } from "../components/ProgressBar";
 import { PromotionCard } from "../components/PromotionCard";
 import { SectionHeader } from "../components/SectionHeader";
-import { isDarkTheme } from "../theme/themeEngine";
+import { isDarkTheme, textOn } from "../theme/themeEngine";
 import { useActiveMerchant, useMerchantTheme } from "../store/useBenefitlyStore";
 
 const benefitlyLogo = require("../../assets/benefitly-logo.png");
@@ -40,28 +39,46 @@ export function HomeScreen() {
   const theme = useMerchantTheme();
   const dark = isDarkTheme(merchant);
   const hasBooking = Boolean(merchant.bookingModule?.enabled);
-  const heroText = dark ? "#FFFFFF" : merchant.id === "luca-bakery" ? theme.text : "#FFFFFF";
+  const heroText = merchant.id === "luca-bakery" ? textOn("#FFF8EF") : "#FFFFFF";
+  const heroMuted = merchant.id === "luca-bakery" ? "rgba(17,24,39,0.72)" : "rgba(255,255,255,0.84)";
   const scrollY = useSharedValue(0);
+
+  React.useEffect(() => {
+    const preloadTask = InteractionManager.runAfterInteractions(() => {
+      [
+        merchant.coverImage,
+        ...merchant.promotions.map((promotion) => promotion.image),
+        ...merchant.activities.map((activity) => activity.image),
+      ].forEach((imageUri) => {
+        Image.prefetch(imageUri).catch(() => undefined);
+      });
+    });
+
+    return () => preloadTask.cancel();
+  }, [merchant.activities, merchant.coverImage, merchant.promotions]);
+
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
     },
   });
-  const heroAnimatedStyle = useAnimatedStyle(() => ({
-    height: interpolate(scrollY.value, [0, 210], [392, 184], Extrapolation.CLAMP),
-  }));
+  const heroAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: 0 }],
+    };
+  });
   const imageAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: interpolate(scrollY.value, [0, 210], [1.04, 1], Extrapolation.CLAMP) },
-      { translateY: interpolate(scrollY.value, [0, 210], [0, -34], Extrapolation.CLAMP) },
-    ],
+    transform: [{ translateY: 0 }],
   }));
   const pointsAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, 120], [1, 0], Extrapolation.CLAMP),
-    transform: [{ translateY: interpolate(scrollY.value, [0, 160], [0, -28], Extrapolation.CLAMP) }],
+    opacity: interpolate(scrollY.value, [0, 110], [1, 0], Extrapolation.CLAMP),
+    transform: [{ translateY: interpolate(scrollY.value, [0, 160], [0, -22], Extrapolation.CLAMP) }],
   }));
   const headerAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: interpolate(scrollY.value, [0, 210], [0, -10], Extrapolation.CLAMP) }],
+    transform: [{ translateY: interpolate(scrollY.value, [0, 220], [0, 56], Extrapolation.CLAMP) }],
+  }));
+  const contentAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: 0 }],
   }));
 
   return (
@@ -72,17 +89,20 @@ export function HomeScreen() {
         contentContainerStyle={[styles.scrollContent, { backgroundColor: theme.background }]}
         bounces={false}
         alwaysBounceVertical={false}
+        decelerationRate="fast"
         directionalLockEnabled
         contentInsetAdjustmentBehavior="never"
         overScrollMode="never"
+        removeClippedSubviews
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
         <View style={styles.heroOuter}>
           <Animated.View style={[styles.hero, heroAnimatedStyle]}>
-            <Animated.View style={[StyleSheet.absoluteFill, imageAnimatedStyle]}>
-              <ImageBackground source={{ uri: merchant.coverImage }} style={StyleSheet.absoluteFill} imageStyle={styles.heroImage} />
-            </Animated.View>
+            <Animated.Image
+              source={{ uri: merchant.coverImage }}
+              style={[StyleSheet.absoluteFill, styles.heroImage, imageAnimatedStyle]}
+            />
             <LinearGradient
               colors={
                 dark
@@ -108,7 +128,7 @@ export function HomeScreen() {
                     </View>
                   </View>
                   <View style={styles.brandCopy}>
-                    <Text style={[styles.brandKicker, { color: heroText }]}>Benefitly</Text>
+                    <Text style={[styles.brandKicker, { color: heroMuted }]}>Benefitly</Text>
                     <Text style={[styles.brandName, { color: heroText }]} numberOfLines={1}>
                       {merchant.merchantName}
                     </Text>
@@ -120,9 +140,9 @@ export function HomeScreen() {
                 </Pressable>
               </Animated.View>
 
-              <Animated.View entering={FadeInUp.duration(420)} style={[styles.heroCopy, pointsAnimatedStyle]}>
+              <Animated.View style={[styles.heroCopy, pointsAnimatedStyle]}>
                 <Text style={[styles.greeting, { color: heroText }]}>Cześć, Radek 👋</Text>
-                <Text style={[styles.label, { color: heroText }]}>Masz</Text>
+                <Text style={[styles.label, { color: heroMuted }]}>Masz</Text>
                 <View style={styles.pointsRow}>
                   <Text style={[styles.points, { color: heroText }]}>
                     {merchant.currentBalance.toLocaleString("pl-PL")}
@@ -131,7 +151,7 @@ export function HomeScreen() {
                 </View>
                 <ProgressBar
                   progress={merchant.progressPercentage}
-                  color={dark ? "#FFFFFF" : theme.primary}
+                  color={merchant.id === "luca-bakery" ? theme.primaryOnBackground : "#FFFFFF"}
                   trackColor={dark ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.44)"}
                 />
                 <View style={styles.progressLabels}>
@@ -152,12 +172,12 @@ export function HomeScreen() {
           />
         </View>
 
-        <View style={[styles.content, { backgroundColor: theme.background }]}>
+        <Animated.View style={[styles.content, { backgroundColor: theme.background }, contentAnimatedStyle]}>
           <SectionHeader
             title="Aktywne promocje"
             action="Zobacz wszystkie"
-            color={theme.primary}
-            textColor={theme.text}
+            color={theme.primaryOnBackground}
+            textColor={theme.backgroundText}
           />
           <ScrollView
             horizontal
@@ -173,8 +193,8 @@ export function HomeScreen() {
                 promotion={promotion}
                 accentColor={theme.primary}
                 surfaceColor={theme.surface}
-                textColor={theme.text}
-                mutedTextColor={theme.muted}
+                textColor={theme.surfaceText}
+                mutedTextColor={theme.surfaceMuted}
                 dark={dark}
                 expanded={!hasBooking}
               />
@@ -182,14 +202,14 @@ export function HomeScreen() {
           </ScrollView>
 
           <View style={styles.activityHeader}>
-            <SectionHeader title="Ostatnia aktywność" color={theme.primary} textColor={theme.text} />
+            <SectionHeader title="Ostatnia aktywność" color={theme.primaryOnBackground} textColor={theme.backgroundText} />
           </View>
           <View
             style={[
               styles.activityCard,
               {
                 backgroundColor: theme.surface,
-                borderColor: dark ? "rgba(255,255,255,0.14)" : "rgba(20,20,20,0.06)",
+                borderColor: theme.surfaceBorder,
               },
             ]}
           >
@@ -197,15 +217,15 @@ export function HomeScreen() {
               <ActivityItem
                 key={activity.id}
                 activity={activity}
-                accentColor={theme.primary}
-                textColor={theme.text}
-                mutedTextColor={theme.muted}
-                dividerColor={dark ? "rgba(255,255,255,0.12)" : "rgba(20,20,20,0.08)"}
+                accentColor={theme.primaryOnSurface}
+                textColor={theme.surfaceText}
+                mutedTextColor={theme.surfaceMuted}
+                dividerColor={theme.surfaceBorder}
               />
             ))}
           </View>
 
-        </View>
+        </Animated.View>
       </Animated.ScrollView>
 
       <MerchantPicker
@@ -217,10 +237,10 @@ export function HomeScreen() {
         visible={reservationVisible}
         merchant={merchant}
         booking={merchant.bookingModule}
-        accentColor={theme.primary}
+        accentColor={theme.primaryOnSurface}
         secondaryColor={theme.secondary}
-        textColor={theme.text}
-        mutedTextColor={theme.muted}
+        textColor={theme.surfaceText}
+        mutedTextColor={theme.surfaceMuted}
         surfaceColor={theme.surface}
         onClose={() => setReservationVisible(false)}
       />
@@ -237,10 +257,12 @@ const styles = StyleSheet.create({
   },
   heroOuter: {
     marginBottom: 20,
+    overflow: "hidden",
   },
   hero: {
     height: 392,
     overflow: "hidden",
+    transformOrigin: "top",
   },
   heroImage: {
     resizeMode: "cover",

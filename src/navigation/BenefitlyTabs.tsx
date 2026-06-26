@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { BottomTabBarProps, createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
+import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,6 +13,7 @@ import { HomeScreen } from "../screens/HomeScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
 import { RewardsScreen } from "../screens/RewardsScreen";
 import { useMerchantTheme } from "../store/useBenefitlyStore";
+import { accentOn, isDarkColor, textOn } from "../theme/themeEngine";
 
 export type BenefitlyTabParamList = {
   Home: undefined;
@@ -42,70 +44,59 @@ export function BenefitlyTabs() {
 function BenefitlyTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const theme = useMerchantTheme();
-  const navAccent = readableAccent(theme.primary, theme.secondary);
+  const navAccent = accentOn("#FFFFFF", theme.primary);
+  const onNavAccent = textOn(navAccent);
+  const routeName = state.routes[state.index].name;
+  const statusBarStyle = routeName === "Home" || isDarkColor(theme.background) ? "light" : "dark";
 
   return (
-    <View style={[styles.shell, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-      <View shouldRasterizeIOS style={styles.bar}>
-        <View pointerEvents="none" style={styles.blurClip}>
-          <BlurView intensity={48} tint="light" style={StyleSheet.absoluteFill} />
-          <View style={styles.glassHighlight} />
-        </View>
-        {state.routes.map((route, index) => {
-          const focused = state.index === index;
-          const isCard = route.name === "Card";
-          const onPress = () => navigation.navigate(route.name);
+    <>
+      <StatusBar style={statusBarStyle} />
+      <View style={[styles.shell, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <View shouldRasterizeIOS style={styles.bar}>
+          <View pointerEvents="none" style={styles.blurClip}>
+            <BlurView intensity={48} tint="light" style={StyleSheet.absoluteFill} />
+            <View style={styles.glassHighlight} />
+          </View>
+          {state.routes.map((route, index) => {
+            const focused = state.index === index;
+            const isCard = route.name === "Card";
+            const onPress = () => navigation.navigate(route.name);
 
-          if (isCard) {
-            return (
-              <Pressable key={route.key} onPress={onPress} style={styles.centerSlot}>
-                <View shouldRasterizeIOS style={[styles.centerHalo, { shadowColor: navAccent }]}>
-                  <View
-                    style={[
-                      styles.centerButton,
-                      {
-                        backgroundColor: navAccent,
-                        borderColor: focused ? "#FFFFFF" : "rgba(255,255,255,0.92)",
-                      },
-                    ]}
-                  >
-                    <FakeQrCode color="#FFFFFF" backgroundColor={navAccent} size={42} quietZone={5} gap={1} />
+            if (isCard) {
+              return (
+                <Pressable key={route.key} onPress={onPress} style={styles.centerSlot}>
+                  <View shouldRasterizeIOS style={[styles.centerHalo, { shadowColor: navAccent }]}>
+                    <View
+                      style={[
+                        styles.centerButton,
+                        {
+                          backgroundColor: navAccent,
+                          borderColor: focused ? "#FFFFFF" : "rgba(255,255,255,0.92)",
+                        },
+                      ]}
+                    >
+                      <FakeQrCode color={onNavAccent} backgroundColor={navAccent} size={42} quietZone={5} gap={1} />
+                    </View>
                   </View>
-                </View>
+                </Pressable>
+              );
+            }
+
+            const iconColor = focused ? navAccent : "#8C91A3";
+            const label = labels[route.name as keyof typeof labels];
+
+            return (
+              <Pressable key={route.key} onPress={onPress} style={styles.tab}>
+                <TabIcon routeName={route.name as keyof BenefitlyTabParamList} color={iconColor} focused={focused} />
+                <Text style={[styles.label, { color: iconColor }]}>{label}</Text>
               </Pressable>
             );
-          }
-
-          const iconColor = focused ? navAccent : "#8C91A3";
-          const label = labels[route.name as keyof typeof labels];
-
-          return (
-            <Pressable key={route.key} onPress={onPress} style={styles.tab}>
-              <TabIcon routeName={route.name as keyof BenefitlyTabParamList} color={iconColor} focused={focused} />
-              <Text style={[styles.label, { color: iconColor }]}>{label}</Text>
-            </Pressable>
-          );
-        })}
+          })}
+        </View>
       </View>
-    </View>
+    </>
   );
-}
-
-function readableAccent(primary: string, fallback: string) {
-  return isLightColor(primary) ? fallback : primary;
-}
-
-function isLightColor(hex: string) {
-  const normalizedHex = hex.replace("#", "");
-  if (normalizedHex.length !== 6) {
-    return false;
-  }
-
-  const red = parseInt(normalizedHex.slice(0, 2), 16);
-  const green = parseInt(normalizedHex.slice(2, 4), 16);
-  const blue = parseInt(normalizedHex.slice(4, 6), 16);
-  const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
-  return luminance > 0.78;
 }
 
 const labels = {

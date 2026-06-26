@@ -1,6 +1,5 @@
 #import "AppDelegate.h"
 
-#import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
 
 @implementation AppDelegate
@@ -13,7 +12,10 @@
   // They will be passed down to the ViewController used by React Native.
   self.initialProps = @{};
 
-  return [super application:application didFinishLaunchingWithOptions:launchOptions];
+  BOOL didFinish = [super application:application didFinishLaunchingWithOptions:launchOptions];
+  self.window.backgroundColor = [UIColor blackColor];
+  self.window.rootViewController.view.backgroundColor = [UIColor blackColor];
+  return didFinish;
 }
 
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
@@ -23,15 +25,7 @@
 
 - (NSURL *)bundleURL
 {
-#if DEBUG
-  NSURL *devBundleURL = [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@".expo/.virtual-metro-entry"];
-  if (devBundleURL != nil) {
-    return devBundleURL;
-  }
   return [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
-#else
-  return [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
-#endif
 }
 
 // Linking API

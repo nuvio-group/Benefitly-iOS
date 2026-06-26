@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MerchantLogo } from "../components/MerchantLogo";
 import { useActiveMerchant, useBenefitlyStore, useMerchantTheme } from "../store/useBenefitlyStore";
+import { accentOn, borderOn, textOn } from "../theme/themeEngine";
 
 const settings = [
   { icon: "notifications-outline", label: "Powiadomienia" },
@@ -29,51 +30,56 @@ export function ProfileScreen() {
       >
         <View style={styles.header}>
           <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
-            <Text style={styles.avatarText}>RR</Text>
+            <Text style={[styles.avatarText, { color: theme.onPrimary }]}>RR</Text>
           </View>
-          <Text style={[styles.name, { color: theme.text }]}>Radek</Text>
-          <Text style={[styles.meta, { color: theme.muted }]}>Benefitly Member</Text>
+          <Text style={[styles.name, { color: theme.backgroundText }]}>Radek</Text>
+          <Text style={[styles.meta, { color: theme.backgroundMuted }]}>Benefitly Member</Text>
         </View>
 
-        <View style={[styles.activeCard, { backgroundColor: theme.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Aktywny merchant</Text>
+        <View style={[styles.activeCard, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder }]}>
+          <Text style={[styles.sectionTitle, { color: theme.surfaceText }]}>Aktywny merchant</Text>
           <View style={styles.activeMerchant}>
-            <MerchantLogo logo={merchant.logo} size={52} backgroundColor="#FFFFFF" color={theme.primary} />
+            <MerchantLogo logo={merchant.logo} size={52} backgroundColor={theme.surfaceText} color={theme.surface} />
             <View style={styles.activeCopy}>
-              <Text style={[styles.activeName, { color: theme.text }]}>{merchant.merchantName}</Text>
-              <Text style={[styles.activeTier, { color: theme.muted }]}>{merchant.membershipTier}</Text>
+              <Text style={[styles.activeName, { color: theme.surfaceText }]}>{merchant.merchantName}</Text>
+              <Text style={[styles.activeTier, { color: theme.surfaceMuted }]}>{merchant.membershipTier}</Text>
             </View>
           </View>
         </View>
 
-        <View style={[styles.settingsCard, { backgroundColor: theme.surface }]}>
+        <View style={[styles.settingsCard, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder }]}>
           {settings.map((item) => (
             <Pressable key={item.label} style={styles.settingRow}>
-              <Ionicons name={item.icon} size={22} color={theme.primary} />
-              <Text style={[styles.settingLabel, { color: theme.text }]}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={20} color={theme.muted} />
+              <Ionicons name={item.icon} size={22} color={theme.primaryOnSurface} />
+              <Text style={[styles.settingLabel, { color: theme.surfaceText }]}>{item.label}</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.surfaceMuted} />
             </Pressable>
           ))}
         </View>
 
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>Zapisani merchanci</Text>
+        <Text style={[styles.sectionTitle, { color: theme.backgroundText }]}>Zapisani merchanci</Text>
         <View style={styles.enrolledGrid}>
-          {merchants.map((item) => (
-            <Pressable
-              key={item.id}
-              onPress={() => setActiveMerchant(item.id)}
-              style={[
-                styles.enrolledCard,
-                { backgroundColor: item.surfaceColor },
-                item.id === merchant.id && { borderColor: item.primaryColor, borderWidth: 2 },
-              ]}
-            >
-              <MerchantLogo logo={item.logo} size={48} backgroundColor="#FFFFFF" color={item.primaryColor} />
-              <Text style={[styles.enrolledName, { color: item.textColor }]} numberOfLines={2}>
-                {item.merchantName}
-              </Text>
-            </Pressable>
-          ))}
+          {merchants.map((item) => {
+            const cardText = textOn(item.surfaceColor);
+            const cardAccent = accentOn(item.surfaceColor, item.primaryColor);
+
+            return (
+              <Pressable
+                key={item.id}
+                onPress={() => setActiveMerchant(item.id)}
+                style={[
+                  styles.enrolledCard,
+                  { backgroundColor: item.surfaceColor, borderColor: borderOn(item.surfaceColor) },
+                  item.id === merchant.id && { borderColor: cardAccent, borderWidth: 2 },
+                ]}
+              >
+                <MerchantLogo logo={item.logo} size={48} backgroundColor={cardText} color={item.surfaceColor} />
+                <Text style={[styles.enrolledName, { color: cardText }]} numberOfLines={2}>
+                  {item.merchantName}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -101,7 +107,6 @@ const styles = StyleSheet.create({
     width: 84,
   },
   avatarText: {
-    color: "#FFFFFF",
     fontSize: 25,
     fontWeight: "900",
   },
@@ -116,6 +121,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   activeCard: {
+    borderWidth: 1,
     borderRadius: 22,
     marginBottom: 14,
     padding: 18,
@@ -143,6 +149,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   settingsCard: {
+    borderWidth: 1,
     borderRadius: 22,
     marginBottom: 24,
     overflow: "hidden",

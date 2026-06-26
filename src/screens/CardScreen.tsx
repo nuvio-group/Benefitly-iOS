@@ -1,82 +1,101 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { ImageBackground, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { FakeQrCode } from "../components/FakeQrCode";
 import { MerchantLogo } from "../components/MerchantLogo";
-import { useActiveMerchant, useMerchantTheme } from "../store/useBenefitlyStore";
+import { useActiveMerchant, useBenefitlyStore, useMerchantTheme } from "../store/useBenefitlyStore";
 import { MerchantConfig } from "../types/merchant";
 
 export function CardScreen() {
   const merchant = useActiveMerchant();
   const theme = useMerchantTheme();
+  const cardGenerated = useBenefitlyStore((state) => Boolean(state.generatedCards[merchant.id]));
+  const generateMerchantCard = useBenefitlyStore((state) => state.generateMerchantCard);
   const { height, width } = useWindowDimensions();
-  const cardWidth = Math.min(width - 36, height * 0.56);
+  const cardWidth = Math.min((width - 36) * 0.85, height * 0.47);
   const cardTheme = buildPassTheme(merchant);
+  const generateFill = theme.primaryOnBackground;
+  const generateText = theme.textOn(generateFill);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-        alwaysBounceVertical={false}
-        overScrollMode="never"
-      >
+      <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={[styles.eyebrow, { color: theme.muted }]}>Benefitly Wallet</Text>
-          <Text style={[styles.title, { color: theme.text }]}>Moja karta</Text>
+          <Text style={[styles.eyebrow, { color: theme.backgroundMuted }]}>Benefitly Wallet</Text>
+          <Text style={[styles.title, { color: theme.backgroundText }]}>Moja karta</Text>
         </View>
 
-        <Animated.View entering={FadeInDown.duration(360)} style={styles.cardShell}>
-          <View style={[styles.passCard, { width: cardWidth, backgroundColor: cardTheme.background }]}>
-            <View style={styles.passTop}>
-              <View style={styles.passBrand}>
-                <View style={styles.logoFrame}>
-                  <MerchantLogo logo={merchant.logo} size={46} backgroundColor="#101010" color={cardTheme.accent} />
+        {cardGenerated ? (
+          <>
+            <Animated.View entering={FadeInDown.duration(360)} style={styles.cardShell}>
+              <View style={[styles.passCard, { width: cardWidth, backgroundColor: cardTheme.background }]}>
+                <View style={styles.passTop}>
+                  <View style={styles.passBrand}>
+                    <View style={styles.logoFrame}>
+                      <MerchantLogo logo={merchant.logo} size={38} backgroundColor="#101010" color={cardTheme.accent} />
+                    </View>
+                    <Text style={styles.passMerchant} numberOfLines={1}>
+                      {cardTheme.name}
+                    </Text>
+                  </View>
+                  <View style={styles.passStatus}>
+                    <Text style={styles.passLabel}>STAN KARTY</Text>
+                    <Text style={styles.passStatusValue}>{cardTheme.status}</Text>
+                  </View>
                 </View>
-                <Text style={styles.passMerchant} numberOfLines={1}>
-                  {cardTheme.name}
-                </Text>
+
+                <ImageBackground source={{ uri: merchant.coverImage }} style={styles.passBanner} imageStyle={styles.passBannerImage}>
+                  <View style={styles.bannerOverlay} />
+                </ImageBackground>
+
+                <View style={styles.passMeta}>
+                  <View style={styles.metaLeft}>
+                    <Text style={styles.passLabel}>ID CZŁONKA</Text>
+                    <Text style={styles.memberId}>{cardTheme.memberId}</Text>
+                  </View>
+                  <View style={styles.metaRight}>
+                    <Text style={styles.passLabel}>NAGRODY</Text>
+                    <Text style={styles.reward}>{cardTheme.reward}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.qrArea}>
+                  <FakeQrCode color="#000000" backgroundColor="#FFFFFF" size={131} quietZone={10} gap={3} />
+                  <Text style={styles.qrCodeNumber}>{cardTheme.memberId}</Text>
+                </View>
               </View>
-              <View style={styles.passStatus}>
-                <Text style={styles.passLabel}>STAN KARTY</Text>
-                <Text style={styles.passStatusValue}>{cardTheme.status}</Text>
-              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeInUp.delay(90).duration(320)}>
+              <Pressable style={styles.appleWalletButton}>
+                <AppleWalletGlyph />
+                <Text style={styles.appleText}>Dodaj do Portfela Apple</Text>
+                <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.62)" />
+              </Pressable>
+            </Animated.View>
+          </>
+        ) : (
+          <Animated.View entering={FadeInDown.duration(360)} style={styles.cardShell}>
+            <View style={[styles.emptyCard, { width: cardWidth, borderColor: theme.border }]}>
+              <MerchantLogo logo={merchant.logo} size={58} backgroundColor={generateFill} color={generateText} />
+              <Text style={[styles.emptyTitle, { color: theme.backgroundText }]}>{merchant.merchantName}</Text>
+              <Text style={[styles.emptySubtitle, { color: theme.backgroundMuted }]}>
+                Karta lojalnościowa jest gotowa do utworzenia.
+              </Text>
+              <Pressable
+                onPress={() => generateMerchantCard(merchant.id)}
+                style={[styles.generateButton, { backgroundColor: generateFill }]}
+              >
+                <Ionicons name="sparkles-outline" size={20} color={generateText} />
+                <Text style={[styles.generateText, { color: generateText }]}>Generuj kartę</Text>
+              </Pressable>
             </View>
-
-            <ImageBackground source={{ uri: merchant.coverImage }} style={styles.passBanner} imageStyle={styles.passBannerImage}>
-              <View style={styles.bannerOverlay} />
-            </ImageBackground>
-
-            <View style={styles.passMeta}>
-              <View style={styles.metaLeft}>
-                <Text style={styles.passLabel}>ID CZŁONKA</Text>
-                <Text style={styles.memberId}>{cardTheme.memberId}</Text>
-              </View>
-              <View style={styles.metaRight}>
-                <Text style={styles.passLabel}>NAGRODY</Text>
-                <Text style={styles.reward}>{cardTheme.reward}</Text>
-              </View>
-            </View>
-
-            <View style={styles.qrArea}>
-              <FakeQrCode color="#000000" backgroundColor="#FFFFFF" size={154} quietZone={12} gap={3} />
-              <Text style={styles.qrCodeNumber}>{cardTheme.memberId}</Text>
-            </View>
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.delay(90).duration(320)}>
-          <Pressable style={styles.appleWalletButton}>
-            <AppleWalletGlyph />
-            <Text style={styles.appleText}>Dodaj do Portfela Apple</Text>
-            <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.62)" />
-          </Pressable>
-        </Animated.View>
-      </ScrollView>
+          </Animated.View>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -114,29 +133,67 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    flex: 1,
+    justifyContent: "flex-start",
     paddingBottom: 126,
     paddingHorizontal: 18,
-    paddingTop: 14,
+    paddingTop: 10,
   },
   header: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   eyebrow: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "800",
     marginBottom: 4,
   },
   title: {
-    fontSize: 34,
+    fontSize: 30,
     fontWeight: "900",
     letterSpacing: 0,
   },
   cardShell: {
     alignItems: "center",
   },
+  emptyCard: {
+    alignItems: "center",
+    borderRadius: 24,
+    borderWidth: 1,
+    minHeight: 398,
+    justifyContent: "center",
+    padding: 24,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    marginTop: 18,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: "center",
+  },
+  generateButton: {
+    alignItems: "center",
+    borderRadius: 18,
+    flexDirection: "row",
+    gap: 8,
+    height: 54,
+    justifyContent: "center",
+    marginTop: 24,
+    paddingHorizontal: 22,
+    width: "100%",
+  },
+  generateText: {
+    fontSize: 17,
+    fontWeight: "900",
+  },
   passCard: {
     borderColor: "rgba(255,255,255,0.2)",
-    borderRadius: 26,
+    borderRadius: 22,
     borderWidth: 1,
     overflow: "hidden",
     shadowColor: "#000000",
@@ -148,29 +205,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    minHeight: 86,
-    paddingHorizontal: 18,
+    minHeight: 72,
+    paddingHorizontal: 15,
   },
   passBrand: {
     alignItems: "center",
     flex: 1,
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
     minWidth: 0,
   },
   logoFrame: {
     alignItems: "center",
     borderColor: "rgba(255,255,255,0.16)",
-    borderRadius: 26,
+    borderRadius: 22,
     borderWidth: 1,
-    height: 52,
+    height: 44,
     justifyContent: "center",
-    width: 52,
+    width: 44,
   },
   passMerchant: {
     color: "#FFFFFF",
     flex: 1,
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: "700",
     letterSpacing: 0,
   },
@@ -180,18 +237,18 @@ const styles = StyleSheet.create({
   },
   passLabel: {
     color: "rgba(255,255,255,0.72)",
-    fontSize: 10,
+    fontSize: 8,
     fontWeight: "900",
     letterSpacing: 2,
   },
   passStatusValue: {
     color: "#FFFFFF",
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "300",
     marginTop: 2,
   },
   passBanner: {
-    height: 132,
+    height: 112,
   },
   passBannerImage: {
     resizeMode: "cover",
@@ -203,8 +260,8 @@ const styles = StyleSheet.create({
   passMeta: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingTop: 22,
+    paddingHorizontal: 15,
+    paddingTop: 18,
   },
   metaLeft: {
     flex: 1,
@@ -215,29 +272,29 @@ const styles = StyleSheet.create({
   },
   memberId: {
     color: "#FFFFFF",
-    fontSize: 25,
+    fontSize: 21,
     fontWeight: "300",
     letterSpacing: 1,
-    marginTop: 7,
+    marginTop: 6,
   },
   reward: {
     color: "#FFFFFF",
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: "300",
-    marginTop: 7,
+    marginTop: 6,
     textAlign: "right",
   },
   qrArea: {
     alignItems: "center",
-    paddingBottom: 26,
-    paddingTop: 52,
+    paddingBottom: 22,
+    paddingTop: 34,
   },
   qrCodeNumber: {
     color: "rgba(255,255,255,0.76)",
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: "700",
     letterSpacing: 4,
-    marginTop: 15,
+    marginTop: 12,
   },
   appleWalletButton: {
     alignItems: "center",
@@ -249,7 +306,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     height: 38,
-    marginTop: 12,
+    marginTop: 10,
     paddingHorizontal: 10,
     width: 218,
   },

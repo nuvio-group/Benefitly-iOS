@@ -2,6 +2,7 @@ import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useBenefitlyStore } from "../store/useBenefitlyStore";
+import { accentOn, textOn } from "../theme/themeEngine";
 import { MerchantConfig } from "../types/merchant";
 import { MerchantLogo } from "./MerchantLogo";
 
@@ -19,6 +20,7 @@ export function MerchantSwitcher({ activeMerchant }: MerchantSwitcherProps) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.logos}>
         {merchants.map((merchant) => {
           const selected = merchant.id === activeMerchant.id;
+          const selectedColor = accentOn("#FFFFFF", merchant.primaryColor);
           return (
             <Pressable
               key={merchant.id}
@@ -26,8 +28,8 @@ export function MerchantSwitcher({ activeMerchant }: MerchantSwitcherProps) {
               style={[
                 styles.logoButton,
                 selected && {
-                  backgroundColor: merchant.primaryColor,
-                  borderColor: merchant.primaryColor,
+                  backgroundColor: selectedColor,
+                  borderColor: selectedColor,
                 },
               ]}
             >
@@ -35,7 +37,7 @@ export function MerchantSwitcher({ activeMerchant }: MerchantSwitcherProps) {
                 logo={merchant.logo}
                 size={42}
                 backgroundColor={selected ? "#FFFFFF" : merchant.surfaceColor}
-                color={merchant.textColor}
+                color={selected ? selectedColor : textOn(merchant.surfaceColor)}
               />
             </Pressable>
           );

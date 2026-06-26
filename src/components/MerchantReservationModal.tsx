@@ -4,7 +4,8 @@ import React from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { BookingDay, BookingModule, BookingService, BookingSlot, MerchantConfig } from "../types/merchant";
+import { accentOn, borderOn, isDarkColor, mutedOn, textOn } from "../theme/themeEngine";
+import { BookingDay, BookingModule, BookingSlot, MerchantConfig } from "../types/merchant";
 
 type MerchantReservationModalProps = {
   visible: boolean;
@@ -65,8 +66,6 @@ const calendarDays = [
   "1",
 ];
 
-const rowHeight = 64;
-
 const dateNumber = (date: string) => date.split(" ")[0];
 
 function buildHourRows(day: BookingDay, type: BookingModule["type"]): HourRow[] {
@@ -103,7 +102,6 @@ export function MerchantReservationModal({
   merchant,
   booking,
   accentColor,
-  secondaryColor,
   textColor,
   mutedTextColor,
   surfaceColor,
@@ -115,12 +113,14 @@ export function MerchantReservationModal({
   const [selectedSlotId, setSelectedSlotId] = React.useState<string | undefined>();
   const [selectedServiceId, setSelectedServiceId] = React.useState(initialService?.id);
   const [hasChosenDay, setHasChosenDay] = React.useState(false);
+  const [showCalendar, setShowCalendar] = React.useState(true);
 
   React.useEffect(() => {
     setSelectedDayId(initialDay?.id);
     setSelectedSlotId(undefined);
     setSelectedServiceId(initialService?.id);
     setHasChosenDay(false);
+    setShowCalendar(true);
   }, [initialDay?.id, initialService?.id, visible]);
 
   if (!booking?.enabled || !initialDay || !initialService) {
@@ -130,252 +130,224 @@ export function MerchantReservationModal({
   const selectedDay = booking.days.find((day) => day.id === selectedDayId) ?? initialDay;
   const selectedService = booking.services.find((service) => service.id === selectedServiceId) ?? initialService;
   const hourRows = buildHourRows(selectedDay, booking.type);
+  const availableHourRows = hourRows.filter((row) => row.available);
   const selectedHour = hourRows.find((row) => row.id === selectedSlotId);
+  const backgroundText = textOn(merchant.backgroundColor) || textColor;
+  const backgroundMuted = mutedOn(merchant.backgroundColor) || mutedTextColor;
+  const surfaceText = textOn(surfaceColor) || textColor;
+  const surfaceMuted = mutedOn(surfaceColor) || mutedTextColor;
+  const surfaceAccent = accentOn(surfaceColor, accentColor);
+  const backgroundAccent = accentOn(merchant.backgroundColor, accentColor);
+  const surfaceBorder = borderOn(surfaceColor);
+  const subtleSurface = isDarkColor(surfaceColor) ? "rgba(255,255,255,0.08)" : "rgba(17,24,39,0.05)";
+  const selectedSurface = isDarkColor(surfaceColor) ? "rgba(255,255,255,0.12)" : "rgba(17,24,39,0.07)";
+  const payFillColor = accentOn(surfaceColor, accentColor);
+  const payTextColor = textOn(payFillColor);
+  const payGradientColors: [string, string] = [payFillColor, payFillColor];
 
   const selectDay = (day: BookingDay) => {
     setSelectedDayId(day.id);
     setSelectedSlotId(undefined);
     setHasChosenDay(true);
+    setShowCalendar(false);
   };
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
       <SafeAreaView style={[styles.safe, { backgroundColor: merchant.backgroundColor }]}>
-        <View style={[styles.stickyHeader, { backgroundColor: merchant.backgroundColor }]}>
+        <View style={[styles.stickyHeader, { backgroundColor: merchant.backgroundColor, borderBottomColor: borderOn(merchant.backgroundColor) }]}>
           <Pressable onPress={onClose} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={28} color={textColor} />
+            <Ionicons name="arrow-back" size={28} color={backgroundText} />
           </Pressable>
           <View style={styles.headerCopy}>
-            <Text style={[styles.title, { color: textColor }]}>Rezerwacje</Text>
-            <Text style={[styles.subtitle, { color: mutedTextColor }]}>Kalendarz i dostępne godziny</Text>
+            <Text style={[styles.title, { color: backgroundText }]}>Rezerwacje</Text>
+            <Text style={[styles.subtitle, { color: backgroundMuted }]}>Kalendarz i dostępne godziny</Text>
           </View>
-          <View style={[styles.headerIcon, { borderColor: `${accentColor}33`, backgroundColor: `${accentColor}12` }]}>
-            <Ionicons name="calendar-clear-outline" size={22} color={accentColor} />
+          <View style={[styles.headerIcon, { borderColor: borderOn(merchant.backgroundColor), backgroundColor: subtleSurface }]}>
+            <Ionicons name="calendar-clear-outline" size={22} color={backgroundAccent} />
           </View>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          bounces
-          alwaysBounceVertical
-          decelerationRate="normal"
-          overScrollMode="never"
-          contentContainerStyle={styles.content}
-        >
-          <View style={[styles.dayRailCard, { backgroundColor: surfaceColor }]}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              bounces={false}
-              overScrollMode="never"
-              contentContainerStyle={styles.dayRail}
-            >
-              {booking.days.map((day: BookingDay) => {
-                const active = hasChosenDay && day.id === selectedDay.id;
-                return (
-                  <Pressable
-                    key={day.id}
-                    onPress={() => selectDay(day)}
-                    style={[
-                      styles.dayPill,
-                      {
-                        backgroundColor: active ? `${accentColor}18` : "transparent",
-                        borderColor: active ? `${accentColor}44` : "rgba(120,120,120,0.14)",
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.dayLabel, { color: active ? accentColor : mutedTextColor }]}>{day.label}</Text>
-                    <Text style={[styles.dayDate, { color: active ? textColor : mutedTextColor }]}>{day.date}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
-
-          <View style={[styles.monthCard, { backgroundColor: surfaceColor }]}>
-            <View style={styles.monthHeader}>
-              <Text style={[styles.monthTitle, { color: textColor }]}>Czerwiec 2026</Text>
-              <View style={styles.monthArrows}>
-                <Ionicons name="chevron-back" size={22} color={mutedTextColor} />
-                <Ionicons name="chevron-forward" size={22} color={mutedTextColor} />
-              </View>
-            </View>
-            <View style={styles.weekHeader}>
-              {["PN", "WT", "ŚR", "CZW", "PT", "SOB", "NIEDZ"].map((label) => (
-                <Text key={label} style={[styles.weekHeaderText, { color: mutedTextColor }]}>
-                  {label}
-                </Text>
-              ))}
-            </View>
-            <View style={styles.monthGrid}>
-              {calendarDays.map((day, index) => {
-                const matchingDay = booking.days.find((bookingDay) => dateNumber(bookingDay.date) === day);
-                const selected = hasChosenDay && matchingDay?.id === selectedDay.id;
-                const muted = index < 3 || index === calendarDays.length - 1;
-                const weekend = index % 7 === 5 || index % 7 === 6;
-                return (
-                  <Pressable
-                    key={`${day}-${index}`}
-                    disabled={!matchingDay}
-                    onPress={() => matchingDay && selectDay(matchingDay)}
-                    style={styles.monthDay}
-                  >
-                    {selected ? (
-                      <View style={[styles.selectedDate, { backgroundColor: accentColor }]}>
-                        <Text style={styles.selectedDateText}>{day}</Text>
-                      </View>
-                    ) : (
-                      <Text
-                        style={[
-                          styles.monthDayText,
-                          {
-                            color: matchingDay
-                              ? textColor
-                              : muted
-                                ? "#B9BDC7"
-                                : weekend
-                                  ? "#E96363"
-                                  : mutedTextColor,
-                          },
-                        ]}
-                      >
-                        {day}
-                      </Text>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
-            <View style={styles.legend}>
-              <LegendDot color={accentColor} label="Dostępne" />
-              <LegendDot color="#7BC7DE" label="Mało miejsc" />
-              <LegendDot color="#C5C8D2" label="Brak" />
-            </View>
-          </View>
-
-          {hasChosenDay ? (
-            <View style={[styles.hoursCard, { backgroundColor: surfaceColor }]}>
-              <View style={styles.sectionTitleRow}>
-                <View style={[styles.smallIcon, { backgroundColor: `${accentColor}12` }]}>
-                  <Ionicons name="time-outline" size={20} color={accentColor} />
-                </View>
-                <View>
-                  <Text style={[styles.sectionTitle, { color: textColor }]}>Godziny</Text>
-                  <Text style={[styles.sectionSubtitle, { color: mutedTextColor }]}>Karuzela 24h</Text>
-                </View>
-              </View>
+        <View style={styles.content}>
+          <View style={[styles.monthCard, { backgroundColor: surfaceColor, borderColor: surfaceBorder }]}>
+            <View style={styles.bookingCardTop}>
+              {!showCalendar ? (
+                <Pressable
+                  onPress={() => setShowCalendar(true)}
+                  style={[styles.calendarBackButton, { borderColor: surfaceBorder, backgroundColor: subtleSurface }]}
+                >
+                  <Ionicons name="calendar-outline" size={18} color={surfaceAccent} />
+                  <Text style={[styles.calendarBackText, { color: surfaceAccent }]}>Kalendarz</Text>
+                </Pressable>
+              ) : null}
               <ScrollView
-                showsVerticalScrollIndicator={false}
+                horizontal
+                showsHorizontalScrollIndicator={false}
                 bounces={false}
-                decelerationRate="fast"
-                snapToInterval={rowHeight + 10}
-                snapToAlignment="start"
                 overScrollMode="never"
-                style={styles.hourCarousel}
-                contentContainerStyle={styles.hourCarouselContent}
+                contentContainerStyle={styles.dayRail}
               >
-                {hourRows.map((row: HourRow) => {
-                  const active = row.id === selectedHour?.id;
+                {booking.days.map((day: BookingDay) => {
+                  const active = hasChosenDay && day.id === selectedDay.id;
                   return (
                     <Pressable
-                      key={row.id}
-                      disabled={!row.available}
-                      onPress={() => setSelectedSlotId(row.id)}
+                      key={day.id}
+                      onPress={() => selectDay(day)}
                       style={[
-                        styles.hourRow,
+                        styles.dayPill,
                         {
-                          borderColor: active ? `${accentColor}55` : "rgba(120,120,120,0.12)",
-                          backgroundColor: active ? `${accentColor}12` : row.available ? "rgba(255,255,255,0.74)" : "rgba(120,120,120,0.06)",
-                          opacity: row.available ? 1 : 0.56,
+                          backgroundColor: active ? selectedSurface : "transparent",
+                          borderColor: active ? surfaceAccent : surfaceBorder,
                         },
                       ]}
                     >
-                      <Text style={[styles.hourTime, { color: active ? accentColor : textColor }]}>{row.time}</Text>
-                      <View style={styles.hourMeta}>
-                        <Text style={[styles.hourStatus, { color: row.available ? textColor : mutedTextColor }]}>
-                          {row.status}
-                        </Text>
-                        <Text style={[styles.hourService, { color: mutedTextColor }]}>
-                          {row.available ? "Dotknij, aby wybrać" : selectedService.name}
-                        </Text>
-                      </View>
-                      <View style={[styles.hourIndicator, { borderColor: active ? accentColor : "rgba(120,120,120,0.22)" }]}>
-                        {active && <View style={[styles.hourIndicatorDot, { backgroundColor: accentColor }]} />}
-                      </View>
-                      {!row.available && <View style={styles.unavailableLine} />}
+                      <Text style={[styles.dayLabel, { color: active ? surfaceAccent : surfaceMuted }]}>{day.label}</Text>
+                      <Text style={[styles.dayDate, { color: active ? surfaceText : surfaceMuted }]}>{day.date}</Text>
                     </Pressable>
                   );
                 })}
               </ScrollView>
             </View>
-          ) : (
-            <View style={[styles.emptyHoursCard, { backgroundColor: surfaceColor }]}>
-              <View style={[styles.smallIcon, { backgroundColor: `${accentColor}12` }]}>
-                <Ionicons name="calendar-number-outline" size={20} color={accentColor} />
-              </View>
-              <View style={styles.emptyCopy}>
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Wybierz dzień</Text>
-                <Text style={[styles.sectionSubtitle, { color: mutedTextColor }]}>
-                  Po wyborze dnia pokażemy karuzelę godzin.
-                </Text>
-              </View>
-            </View>
-          )}
-        </ScrollView>
 
-        <View style={[styles.footer, { backgroundColor: surfaceColor, borderTopColor: "rgba(120,120,120,0.12)" }]}>
+            {showCalendar ? (
+              <>
+                <View style={styles.monthHeader}>
+                  <Text style={[styles.monthTitle, { color: surfaceText }]}>Czerwiec 2026</Text>
+                  <View style={styles.monthArrows}>
+                    <Ionicons name="chevron-back" size={22} color={surfaceMuted} />
+                    <Ionicons name="chevron-forward" size={22} color={surfaceMuted} />
+                  </View>
+                </View>
+                <View style={styles.weekHeader}>
+                  {["PN", "WT", "ŚR", "CZW", "PT", "SOB", "NIEDZ"].map((label) => (
+                    <Text key={label} style={[styles.weekHeaderText, { color: surfaceMuted }]}>
+                      {label}
+                    </Text>
+                  ))}
+                </View>
+                <View style={styles.monthGrid}>
+                  {calendarDays.map((day, index) => {
+                    const matchingDay = booking.days.find((bookingDay) => dateNumber(bookingDay.date) === day);
+                    const selected = hasChosenDay && matchingDay?.id === selectedDay.id;
+                    const muted = index < 3 || index === calendarDays.length - 1;
+                    const weekend = index % 7 === 5 || index % 7 === 6;
+                    return (
+                      <Pressable
+                        key={`${day}-${index}`}
+                        disabled={!matchingDay}
+                        onPress={() => matchingDay && selectDay(matchingDay)}
+                        style={styles.monthDay}
+                      >
+                        {selected ? (
+                          <View style={[styles.selectedDate, { backgroundColor: accentColor }]}>
+                            <Text style={[styles.selectedDateText, { color: textOn(accentColor) }]}>{day}</Text>
+                          </View>
+                        ) : (
+                          <Text
+                            style={[
+                              styles.monthDayText,
+                              {
+                                color: matchingDay
+                                  ? surfaceText
+                                  : muted
+                                    ? surfaceMuted
+                                    : weekend
+                                      ? "#E96363"
+                                      : surfaceMuted,
+                              },
+                            ]}
+                          >
+                            {day}
+                          </Text>
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <View style={styles.legend}>
+                  <LegendDot color={surfaceAccent} label="Dostępne" textColor={surfaceMuted} />
+                  <LegendDot color="#7BC7DE" label="Mało miejsc" textColor={surfaceMuted} />
+                  <LegendDot color="#C5C8D2" label="Brak" textColor={surfaceMuted} />
+                </View>
+              </>
+            ) : (
+              <View style={styles.hoursPane}>
+                <View style={styles.inlineHoursHeader}>
+                  <View style={[styles.smallIcon, { backgroundColor: subtleSurface }]}>
+                    <Ionicons name="time-outline" size={20} color={surfaceAccent} />
+                  </View>
+                  <View>
+                    <Text style={[styles.inlineHoursTitle, { color: surfaceText }]}>Dostępne godziny</Text>
+                    <Text style={[styles.sectionSubtitle, { color: surfaceMuted }]}>
+                      {selectedDay.label}, {selectedDay.date}
+                    </Text>
+                  </View>
+                </View>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  bounces={false}
+                  decelerationRate="fast"
+                  overScrollMode="never"
+                  style={styles.hourList}
+                  contentContainerStyle={styles.hourListContent}
+                >
+                  {availableHourRows.map((row: HourRow) => {
+                    const active = row.id === selectedHour?.id;
+
+                    return (
+                      <Pressable
+                        key={row.id}
+                        onPress={() => setSelectedSlotId(row.id)}
+                        style={[
+                          styles.hourOption,
+                          {
+                            backgroundColor: active ? selectedSurface : subtleSurface,
+                            borderColor: active ? surfaceAccent : surfaceBorder,
+                          },
+                        ]}
+                      >
+                        <View style={styles.hourOptionCopy}>
+                          <Text style={[styles.hourOptionTime, { color: active ? surfaceAccent : surfaceText }]}>
+                            {row.time}
+                          </Text>
+                          <Text style={[styles.hourOptionMeta, { color: surfaceMuted }]}>
+                            {row.status} • {selectedService.name} • {selectedService.price}
+                          </Text>
+                        </View>
+                        <View style={[styles.hourIndicator, { borderColor: active ? surfaceAccent : surfaceBorder }]}>
+                          {active ? <View style={[styles.hourIndicatorDot, { backgroundColor: surfaceAccent }]} /> : null}
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+
+              </View>
+            )}
+          </View>
+        </View>
+
+        <View style={[styles.footer, { backgroundColor: surfaceColor, borderTopColor: surfaceBorder }]}>
           <View style={styles.footerTop}>
             <View style={styles.footerCopy}>
-              <Text style={[styles.footerTitle, { color: textColor }]} numberOfLines={1}>
+              <Text style={[styles.footerTitle, { color: surfaceText }]} numberOfLines={1}>
                 {hasChosenDay ? `${selectedDay.label}, ${selectedDay.date}` : "Wybierz dzień"}
               </Text>
-              <Text style={[styles.footerMeta, { color: mutedTextColor }]} numberOfLines={1}>
+              <Text style={[styles.footerMeta, { color: surfaceMuted }]} numberOfLines={1}>
                 {selectedHour ? `${selectedHour.time} • ${selectedService.name} • ${selectedService.price}` : "Godzina i usługa pojawią się po wyborze terminu"}
               </Text>
             </View>
-            <View style={[styles.footerTimeBadge, { backgroundColor: selectedHour ? `${accentColor}14` : "rgba(120,120,120,0.08)" }]}>
-              <Text style={[styles.footerTimeText, { color: selectedHour ? accentColor : mutedTextColor }]}>
+            <View style={[styles.footerTimeBadge, { backgroundColor: selectedHour ? selectedSurface : subtleSurface }]}>
+              <Text style={[styles.footerTimeText, { color: selectedHour ? surfaceAccent : surfaceMuted }]}>
                 {selectedHour?.time ?? "--:--"}
               </Text>
             </View>
           </View>
 
-          {selectedHour && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              bounces={false}
-              overScrollMode="never"
-              contentContainerStyle={styles.serviceRail}
-            >
-              {booking.services.map((service: BookingService) => {
-                const active = service.id === selectedService.id;
-                return (
-                  <Pressable
-                    key={service.id}
-                    onPress={() => setSelectedServiceId(service.id)}
-                    style={[
-                      styles.serviceChip,
-                      {
-                        backgroundColor: active ? `${accentColor}14` : "rgba(120,120,120,0.06)",
-                        borderColor: active ? `${accentColor}44` : "rgba(120,120,120,0.12)",
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.serviceChipTitle, { color: active ? accentColor : textColor }]}>{service.name}</Text>
-                    <Text style={[styles.serviceChipMeta, { color: mutedTextColor }]}>
-                      {service.duration} • {service.price}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
-
           <Pressable disabled={!selectedHour} style={[styles.payButton, !selectedHour && styles.payButtonDisabled]}>
-            <LinearGradient colors={[accentColor, secondaryColor]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.payGradient}>
-              <Text style={styles.payText}>Płacę</Text>
-              <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
+            <LinearGradient colors={payGradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.payGradient}>
+              <Text style={[styles.payText, { color: payTextColor }]}>Płacę</Text>
+              <Ionicons name="logo-apple" size={20} color={payTextColor} />
             </LinearGradient>
           </Pressable>
         </View>
@@ -384,11 +356,11 @@ export function MerchantReservationModal({
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function LegendDot({ color, label, textColor }: { color: string; label: string; textColor: string }) {
   return (
     <View style={styles.legendItem}>
       <View style={[styles.legendDot, { backgroundColor: color }]} />
-      <Text style={styles.legendText}>{label}</Text>
+      <Text style={[styles.legendText, { color: textColor }]}>{label}</Text>
     </View>
   );
 }
@@ -412,9 +384,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   content: {
-    paddingBottom: 196,
-    paddingHorizontal: 20,
-    paddingTop: 142,
+    bottom: 0,
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 124,
   },
   backButton: {
     alignItems: "center",
@@ -443,10 +417,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 44,
   },
-  dayRailCard: {
-    borderRadius: 20,
-    marginBottom: 14,
-    padding: 8,
+  bookingCardTop: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 18,
   },
   dayRail: {
     gap: 8,
@@ -467,10 +442,25 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     marginTop: 4,
   },
+  calendarBackButton: {
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 6,
+    height: 50,
+    paddingHorizontal: 12,
+  },
+  calendarBackText: {
+    fontSize: 12,
+    fontWeight: "900",
+  },
   monthCard: {
-    borderRadius: 22,
-    marginBottom: 14,
-    padding: 16,
+    borderRadius: 0,
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 0,
   },
   monthHeader: {
     alignItems: "center",
@@ -546,27 +536,19 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "800",
   },
-  hoursCard: {
-    borderRadius: 22,
-    marginBottom: 14,
-    padding: 16,
-  },
-  emptyHoursCard: {
-    alignItems: "center",
-    borderRadius: 22,
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 14,
-    padding: 16,
-  },
-  emptyCopy: {
+  hoursPane: {
     flex: 1,
+    minHeight: 0,
   },
-  sectionTitleRow: {
+  inlineHoursHeader: {
     alignItems: "center",
     flexDirection: "row",
     gap: 10,
-    marginBottom: 14,
+    marginBottom: 12,
+  },
+  inlineHoursTitle: {
+    fontSize: 18,
+    fontWeight: "900",
   },
   smallIcon: {
     alignItems: "center",
@@ -584,37 +566,35 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginTop: 2,
   },
-  hourCarousel: {
-    height: rowHeight * 4 + 30,
+  hourList: {
+    flex: 1,
+    minHeight: 0,
   },
-  hourCarouselContent: {
+  hourListContent: {
     gap: 10,
-    paddingBottom: 8,
+    paddingBottom: 188,
   },
-  hourRow: {
+  hourOption: {
     alignItems: "center",
     borderRadius: 18,
     borderWidth: 1,
     flexDirection: "row",
-    height: rowHeight,
+    minHeight: 66,
     overflow: "hidden",
     paddingHorizontal: 14,
+    paddingVertical: 11,
   },
-  hourTime: {
-    fontSize: 20,
-    fontWeight: "900",
-    width: 74,
-  },
-  hourMeta: {
+  hourOptionCopy: {
     flex: 1,
+    minWidth: 0,
   },
-  hourStatus: {
-    fontSize: 14,
+  hourOptionTime: {
+    fontSize: 22,
     fontWeight: "900",
   },
-  hourService: {
+  hourOptionMeta: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: 4,
   },
   hourIndicator: {
@@ -630,14 +610,6 @@ const styles = StyleSheet.create({
     height: 12,
     width: 12,
   },
-  unavailableLine: {
-    backgroundColor: "rgba(120,120,120,0.18)",
-    height: 1,
-    position: "absolute",
-    right: 14,
-    transform: [{ rotate: "-15deg" }],
-    width: 108,
-  },
   footer: {
     borderTopWidth: 1,
     bottom: 0,
@@ -651,6 +623,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.08,
     shadowRadius: 22,
+    zIndex: 20,
   },
   footerTop: {
     alignItems: "center",
@@ -680,26 +653,6 @@ const styles = StyleSheet.create({
   footerTimeText: {
     fontSize: 15,
     fontWeight: "900",
-  },
-  serviceRail: {
-    gap: 8,
-    paddingTop: 12,
-  },
-  serviceChip: {
-    borderRadius: 14,
-    borderWidth: 1,
-    minWidth: 136,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-  },
-  serviceChipTitle: {
-    fontSize: 13,
-    fontWeight: "900",
-  },
-  serviceChipMeta: {
-    fontSize: 11,
-    fontWeight: "700",
-    marginTop: 3,
   },
   payButton: {
     borderRadius: 18,

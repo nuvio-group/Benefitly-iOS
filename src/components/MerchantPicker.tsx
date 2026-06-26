@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useBenefitlyStore } from "../store/useBenefitlyStore";
+import { accentOn, textOn } from "../theme/themeEngine";
 import { MerchantConfig } from "../types/merchant";
 import { MerchantLogo } from "./MerchantLogo";
 
@@ -88,14 +89,16 @@ export function MerchantPicker({ activeMerchant, visible, onClose }: MerchantPic
             contentContainerStyle={styles.list}
             renderItem={({ item }) => {
               const selected = item.id === activeMerchant.id;
+              const rowAccent = accentOn("#FFFFFF", item.primaryColor);
+              const rowAccentText = textOn(rowAccent);
               return (
                 <Pressable
                   onPress={() => selectMerchant(item.id)}
                   style={[
                     styles.row,
                     selected && {
-                      borderColor: item.primaryColor,
-                      backgroundColor: `${item.primaryColor}10`,
+                      borderColor: rowAccent,
+                      backgroundColor: "rgba(17,24,39,0.05)",
                     },
                   ]}
                 >
@@ -117,12 +120,12 @@ export function MerchantPicker({ activeMerchant, visible, onClose }: MerchantPic
                     style={[
                       styles.statusDot,
                       {
-                        borderColor: selected ? item.primaryColor : "rgba(17,24,39,0.13)",
-                        backgroundColor: selected ? item.primaryColor : "#FFFFFF",
+                        borderColor: selected ? rowAccent : "rgba(17,24,39,0.13)",
+                        backgroundColor: selected ? rowAccent : "#FFFFFF",
                       },
                     ]}
                   >
-                    {selected ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
+                    {selected ? <Ionicons name="checkmark" size={16} color={rowAccentText} /> : null}
                   </View>
                 </Pressable>
               );

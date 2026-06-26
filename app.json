@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/benefitly-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FF6A00"
+      "backgroundColor": "#000000"
     },
     "userInterfaceStyle": "light",
     "jsEngine": "jsc",

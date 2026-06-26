@@ -20,42 +20,42 @@ export function RewardsScreen() {
         overScrollMode="never"
       >
         <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.text }]}>Nagrody</Text>
-          <Text style={[styles.subtitle, { color: theme.muted }]}>{merchant.merchantName}</Text>
+          <Text style={[styles.title, { color: theme.backgroundText }]}>Nagrody</Text>
+          <Text style={[styles.subtitle, { color: theme.backgroundMuted }]}>{merchant.merchantName}</Text>
         </View>
 
-        <View style={[styles.progressCard, { backgroundColor: theme.surface }]}>
+        <View style={[styles.progressCard, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder }]}>
           <View style={styles.progressTop}>
             <View>
-              <Text style={[styles.cardLabel, { color: theme.muted }]}>Aktualne saldo</Text>
-              <Text style={[styles.balance, { color: theme.text }]}>
+              <Text style={[styles.cardLabel, { color: theme.surfaceMuted }]}>Aktualne saldo</Text>
+              <Text style={[styles.balance, { color: theme.surfaceText }]}>
                 {merchant.currentBalance.toLocaleString("pl-PL")} pkt
               </Text>
             </View>
             <View style={[styles.tierBadge, { backgroundColor: theme.primary }]}>
-              <Text style={styles.tierBadgeText}>{merchant.membershipTier}</Text>
+              <Text style={[styles.tierBadgeText, { color: theme.onPrimary }]}>{merchant.membershipTier}</Text>
             </View>
           </View>
           <ProgressBar
             progress={merchant.progressPercentage}
-            color={theme.primary}
-            trackColor="rgba(120,120,120,0.16)"
+            color={theme.primaryOnSurface}
+            trackColor={theme.borderOn(theme.surface)}
           />
-          <Text style={[styles.nextReward, { color: theme.muted }]}>{merchant.nextReward}</Text>
+          <Text style={[styles.nextReward, { color: theme.surfaceMuted }]}>{merchant.nextReward}</Text>
         </View>
 
         {merchant.rewards.map((reward) => (
-          <View key={reward.id} style={[styles.rewardCard, { backgroundColor: theme.surface }]}>
+          <View key={reward.id} style={[styles.rewardCard, { backgroundColor: theme.surface, borderColor: theme.surfaceBorder }]}>
             <Image source={{ uri: reward.image }} style={styles.rewardImage} />
             <View style={styles.rewardCopy}>
-              <Text style={[styles.rewardTitle, { color: theme.text }]}>{reward.title}</Text>
-              <Text style={[styles.rewardDescription, { color: theme.muted }]}>{reward.description}</Text>
-              <Text style={[styles.rewardPoints, { color: theme.primary }]}>
+              <Text style={[styles.rewardTitle, { color: theme.surfaceText }]}>{reward.title}</Text>
+              <Text style={[styles.rewardDescription, { color: theme.surfaceMuted }]}>{reward.description}</Text>
+              <Text style={[styles.rewardPoints, { color: theme.primaryOnSurface }]}>
                 {reward.pointsRequired.toLocaleString("pl-PL")} pkt
               </Text>
             </View>
             <Pressable style={[styles.claimButton, { backgroundColor: theme.primary }]}>
-              <Ionicons name="gift-outline" size={20} color="#FFFFFF" />
+              <Ionicons name="gift-outline" size={20} color={theme.onPrimary} />
             </Pressable>
           </View>
         ))}
@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   progressCard: {
+    borderWidth: 1,
     borderRadius: 22,
     gap: 14,
     marginBottom: 18,
@@ -115,7 +116,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   tierBadgeText: {
-    color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "900",
   },
@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
   },
   rewardCard: {
     alignItems: "center",
+    borderWidth: 1,
     borderRadius: 18,
     flexDirection: "row",
     marginBottom: 12,

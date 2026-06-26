@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { accentOn, textOn } from "../theme/themeEngine";
 import { BookingModule } from "../types/merchant";
 
 type MerchantCalendarProps = {
@@ -16,23 +17,29 @@ export function MerchantCalendar({ booking, accentColor, secondaryColor, onPress
     return null;
   }
 
+  const shellColor = "rgba(255,255,255,0.92)";
+  const calendarAccent = accentOn("#FFFFFF", accentColor);
+  const labelColor = accentOn("#FFFFFF", secondaryColor) === textOn("#FFFFFF")
+    ? textOn("#FFFFFF")
+    : accentOn("#FFFFFF", secondaryColor);
+
   return (
-    <View style={styles.shell}>
+    <View style={[styles.shell, { backgroundColor: shellColor }]}>
       <Pressable
         onPress={onPress}
         style={[
           styles.button,
           {
-            backgroundColor: `${accentColor}0E`,
-            borderColor: `${accentColor}30`,
+            backgroundColor: "rgba(17,24,39,0.04)",
+            borderColor: "rgba(17,24,39,0.12)",
           },
         ]}
       >
-        <View style={[styles.iconBubble, { backgroundColor: `${accentColor}14` }]}>
-          <Ionicons name="calendar-clear-outline" size={21} color={accentColor} />
+        <View style={[styles.iconBubble, { backgroundColor: "rgba(17,24,39,0.06)" }]}>
+          <Ionicons name="calendar-clear-outline" size={21} color={calendarAccent} />
         </View>
-        <Text style={[styles.label, { color: secondaryColor }]}>Rezerwacje</Text>
-        <Ionicons name="chevron-forward" size={18} color={accentColor} />
+        <Text style={[styles.label, { color: labelColor }]}>Rezerwacje</Text>
+        <Ionicons name="chevron-forward" size={18} color={calendarAccent} />
       </Pressable>
     </View>
   );
@@ -40,7 +47,6 @@ export function MerchantCalendar({ booking, accentColor, secondaryColor, onPress
 
 const styles = StyleSheet.create({
   shell: {
-    backgroundColor: "rgba(255,255,255,0.92)",
     borderColor: "rgba(255,255,255,0.74)",
     borderRadius: 20,
     borderWidth: 1,
