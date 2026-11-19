@@ -1,0 +1,18 @@
+schema_version: 1
+name: benefitly-ios
+display_name: Benefitly iOS (Expo)
+type: application
+owner: unassigned
+repository: nuvio-group/Benefitly-iOS
+status: active
+environments:
+  - dev
+  - prod
+dependencies:
+  - loyalty
+observability:
+  app_label: null
+  grafana_dashboard: null
+secrets:
+  vault_path: null
+
